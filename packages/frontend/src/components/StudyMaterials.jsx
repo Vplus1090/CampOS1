@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, CaretDown, Plus, Pencil, Trash, ArrowsCounterClockwise } from '@phosphor-icons/react';
+import { Download, CaretDown, Plus, Pencil, Trash, ArrowsCounterClockwise, MagnifyingGlass } from '@phosphor-icons/react';
 import M3ScreenHeader from './M3ScreenHeader';
 import { API_BASE } from '../config/api';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,6 +10,7 @@ export default function StudyMaterials({ currentUser, setActiveTab, initialBranc
   const [shelfCategory, setShelfCategory] = useState('Notes');
   const [shelfSubject, setShelfSubject] = useState('All Subjects');
   const [downloadingId, setDownloadingId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [materials, setMaterials] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -164,7 +165,12 @@ export default function StudyMaterials({ currentUser, setActiveTab, initialBranc
       shelfSubject === 'All Subjects' || 
       material.subject === shelfSubject;
 
-    return matchesBranch && matchesSemester && matchesCategory && matchesSubject;
+    const matchesSearch = 
+      !searchQuery.trim() || 
+      material.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (material.code && material.code.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    return matchesBranch && matchesSemester && matchesCategory && matchesSubject && matchesSearch;
   });
 
   const handleDownload = (course) => {
@@ -311,6 +317,19 @@ export default function StudyMaterials({ currentUser, setActiveTab, initialBranc
 
         {/* Filters Panel */}
         <div className="flex flex-col gap-3 shrink-0">
+          <div className="relative w-full text-left">
+            <input
+              type="text"
+              placeholder="Search by topic or course code..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="m3-filled-field w-full pl-10 pr-4 !h-11"
+            />
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-m3-primary pointer-events-none">
+              <MagnifyingGlass size={16} />
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5 text-left">
               <span className="m3-body-small font-medium uppercase tracking-wider pl-1">Branch</span>
