@@ -1,0 +1,940 @@
+@import './styles/m3-expressive.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --sans: var(--m3-font);
+  --mono: ui-monospace, Consolas, monospace;
+
+  font-family: var(--sans);
+  font-size: 18px;
+  line-height: 145%;
+  letter-spacing: 0.18px;
+  color-scheme: dark;
+  color: var(--m3-on-surface);
+  background: var(--m3-surface);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+}
+
+body {
+  margin: 0;
+  background-color: var(--m3-surface);
+  font-family: var(--m3-font);
+}
+
+#root {
+  width: 1126px;
+  max-width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* Hide default scrollbars for premium mobile aesthetics */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.overflow-y-auto, .overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Metro home screen — M3 expressive tiles */
+.home-screen {
+  --home-bg: var(--m3-home-surface);
+  --home-pill: var(--m3-surface-container-high);
+  --home-pill-hover: var(--m3-surface-container-highest);
+  --home-pill-active: var(--m3-surface-container-low);
+  --home-gap: 10px;
+  --home-pad-x: 20px;
+  --home-radius-pill: 9999px;
+  --home-radius-round: 28px;
+  --home-radius-soft: 22px;
+  --home-radius-oval: 38px;
+  position: relative;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+  background: var(--home-bg);
+  padding: calc(16px + env(safe-area-inset-top, 0px)) var(--home-pad-x) calc(18px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.home-screen__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 4px 0 22px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 100;
+}
+
+.home-screen__titles {
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+}
+
+.home-screen__profile-pill {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 4px 4px 4px 14px;
+  border-radius: 9999px;
+  background: var(--home-pill);
+  border: 1.5px solid color-mix(in srgb, var(--m3-outline-variant) 40%, transparent);
+  color: var(--m3-on-surface);
+  cursor: pointer;
+  outline: none;
+  transition: 
+    transform var(--m3-duration-short) var(--m3-ease-spring), 
+    background var(--m3-duration-short) var(--m3-ease-standard);
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.home-screen__profile-pill:active {
+  transform: scale(0.96);
+}
+
+.home-screen__profile-pill-settings-icon {
+  color: var(--m3-on-surface-variant);
+  transition: transform 0.35s var(--m3-ease-spring);
+}
+
+.home-screen__profile-pill:hover .home-screen__profile-pill-settings-icon {
+  transform: rotate(30deg);
+}
+
+.home-screen__avatar-container {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--m3-surface-container-highest) 70%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px var(--home-pill), 0 0 0 4px var(--m3-primary);
+  transition: box-shadow var(--m3-duration-short) var(--m3-ease-standard);
+}
+
+.home-screen__profile-pill:hover .home-screen__avatar-container {
+  box-shadow: 0 0 0 2px var(--home-pill), 0 0 0 5px var(--m3-primary);
+}
+
+.home-screen__avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-screen__avatar-placeholder {
+  width: 18px;
+  height: 18px;
+  color: var(--m3-primary);
+}
+
+.home-screen__welcome {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--m3-on-surface-variant);
+}
+
+.home-screen__name {
+  margin: 2px 0 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--m3-on-surface);
+}
+
+.home-screen__logout,
+.home-screen__theme-btn {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: var(--home-pill);
+  color: var(--m3-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  transition:
+    background var(--m3-duration-short) var(--m3-ease-standard),
+    transform var(--m3-duration-short) var(--m3-ease-spring);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.home-screen__logout:hover,
+.home-screen__theme-btn:hover,
+.home-screen__more-btn:hover {
+  background: var(--home-pill-hover);
+}
+
+.home-screen__logout:active,
+.home-screen__theme-btn:active,
+.home-screen__more-btn:active {
+  background: var(--home-pill-active);
+  transform: scale(0.96);
+}
+
+.home-screen__logout-icon,
+.home-screen__theme-btn-icon,
+.home-screen__more-btn-icon {
+  width: 26px;
+  height: 26px;
+}
+
+/* Floating 3-Dot Menu Dropdown */
+.home-screen__menu-dropdown {
+  position: absolute;
+  top: 56px;
+  right: 0;
+  z-index: 10000;
+  overflow: clip;
+  background-color: var(--m3-surface);
+  background-image: linear-gradient(var(--m3-surface-container-highest), var(--m3-surface-container-highest));
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: 16px;
+  padding: 8px 0;
+  min-width: 170px;
+  box-shadow: var(--m3-2);
+  display: flex;
+  flex-direction: column;
+  /* NO transform here — any transform isolates the stacking context and kills backdrop-filter.
+     Framer Motion only animates opacity now; the slide feel comes from margin-top. */
+  animation: dropdown-enter 0.15s cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+@keyframes dropdown-enter {
+  from { opacity: 0; margin-top: -8px; }
+  to   { opacity: 1; margin-top: 0px; }
+}
+
+.home-screen__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: var(--m3-on-surface);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--m3-duration-short) var(--m3-ease-standard);
+}
+
+.home-screen__menu-item:hover {
+  background: color-mix(in srgb, var(--m3-surface-container-highest) 65%, transparent);
+}
+
+.home-screen__menu-item:active {
+  background: color-mix(in srgb, var(--m3-primary) 15%, transparent);
+}
+
+.home-screen__menu-item-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--m3-primary);
+}
+
+/* Frosted Dialog Card (Made Opaque as requested) */
+.m3-frosted-dialog {
+  background: var(--m3-surface-container-high) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid color-mix(in srgb, var(--m3-outline-variant) 20%, transparent) !important;
+}
+
+.home-screen__chips {
+  flex-shrink: 0;
+  margin-bottom: 10px;
+}
+
+.home-screen__grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--home-gap);
+  container-type: size;
+}
+
+.home-screen__grid--rows-5 {
+  /* Row 4 taller (oval tiles), row 5 shorter (soft rects) */
+  grid-template-rows:
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    minmax(0, 1.22fr)
+    minmax(0, 0.88fr);
+}
+
+.home-screen__grid--rows-6 {
+  /* Dynamic 6-row setup for student dashboard with info hub */
+  grid-template-rows:
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    minmax(0, 1fr)
+    minmax(0, 1.22fr)
+    minmax(0, 0.88fr)
+    minmax(0, 1fr);
+}
+
+.home-screen__grid--rows-3 {
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+}
+
+.home-screen__grid--rows-1 {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.home-screen__grid--rows-2 {
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.home-pill {
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+  border: none;
+  border-radius: var(--home-radius-round);
+  background: var(--home-pill);
+  color: var(--m3-primary);
+  font-size: clamp(15px, 2.5vh, 20px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1em;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+  transition:
+    background var(--m3-duration-short) var(--m3-ease-standard),
+    transform var(--m3-duration-short) var(--m3-ease-spring);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  position: relative;
+}
+
+/* Shape variants per mock */
+.home-pill--shape-pill {
+  border-radius: var(--home-radius-pill);
+  font-size: clamp(16px, 2.6vh, 21px);
+}
+
+.home-pill--shape-round {
+  border-radius: var(--home-radius-round);
+}
+
+.home-pill--shape-soft {
+  border-radius: var(--home-radius-soft);
+  font-size: clamp(14px, 2.2vh, 18px);
+}
+
+.home-pill--shape-oval {
+  border-radius: var(--home-radius-oval);
+  font-size: clamp(14px, 2.2vh, 18px);
+}
+
+.home-pill--shape-squircle {
+  border-radius: var(--home-radius-pill);
+  padding: 0;
+}
+
+.home-pill--align-start {
+  justify-content: flex-start;
+  padding-left: 1.1em;
+  padding-right: 0.65em;
+}
+
+.home-pill--align-center {
+  justify-content: center;
+}
+
+.home-pill--icon-only {
+  justify-content: center;
+  padding: 0;
+}
+
+.home-pill__label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.45em;
+}
+
+.home-pill--align-center .home-pill__label {
+  justify-content: center;
+}
+
+.home-pill__icon {
+  width: 1.3em;
+  height: 1.3em;
+  flex-shrink: 0;
+}
+
+/* Canteen only: linked main + chevron with thin seam */
+.home-pill-split {
+  grid-column: span 4;
+  display: grid;
+  grid-template-columns: 3fr 1fr;
+  gap: 3px;
+  height: 100%;
+  min-height: 0;
+}
+
+.home-pill-split .home-pill {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+
+.home-pill-split__main {
+  border-radius: var(--home-radius-round) 0 0 var(--home-radius-round);
+}
+
+.home-pill-split__side {
+  border-radius: 0 var(--home-radius-round) var(--home-radius-round) 0;
+  padding: 0;
+}
+
+.home-pill:hover {
+  background: var(--home-pill-hover);
+}
+
+.home-pill:active {
+  background: var(--home-pill-active);
+  transform: scale(0.98);
+}
+
+.home-pill--c4 {
+  grid-column: span 4;
+}
+
+.home-pill--c3 {
+  grid-column: span 3;
+}
+
+.home-pill--c2 {
+  grid-column: span 2;
+}
+
+.home-pill--c1 {
+  grid-column: span 1;
+  padding: 0;
+}
+
+/* Mess / Skill / Shelf / Calendar — icon above centered text */
+.home-pill--tile-vertical {
+  justify-content: center;
+  align-items: center;
+  padding: 0.5em 0.65em;
+}
+
+.home-pill__vertical {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  width: 100%;
+  height: 100%;
+  font-weight: 600;
+  text-align: center;
+}
+
+.home-pill--tile-vertical .home-pill__icon {
+  width: 1.55em;
+  height: 1.55em;
+  flex-shrink: 0;
+}
+
+.home-pill__vertical-text {
+  line-height: 1.1;
+  font-size: clamp(14px, 2.2vh, 18px);
+}
+
+.home-pill__vertical-text--stacked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  line-height: 1.08;
+}
+
+/* Container query to handle horizontal transition when the grid is squished */
+@container (max-height: 430px) {
+  .home-pill--tile-vertical {
+    padding: 0 0.75em !important;
+  }
+  .home-pill__vertical {
+    flex-direction: row !important;
+    gap: 0.45em !important;
+    text-align: left !important;
+  }
+  .home-pill--tile-vertical .home-pill__icon {
+    width: 1.35em !important;
+    height: 1.35em !important;
+  }
+  .home-pill__vertical-text {
+    line-height: 1 !important;
+    font-size: clamp(13px, 2.2vh, 16px) !important;
+  }
+  .home-pill__vertical-text--stacked {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.25em !important;
+    line-height: 1 !important;
+  }
+}
+
+/* Screen height media query fallback for older browsers / extra resilience */
+@media (max-height: 780px) {
+  .home-pill--tile-vertical {
+    padding: 0 0.75em;
+  }
+  .home-pill__vertical {
+    flex-direction: row;
+    gap: 0.45em;
+    text-align: left;
+  }
+  .home-pill--tile-vertical .home-pill__icon {
+    width: 1.35em;
+    height: 1.35em;
+  }
+  .home-pill__vertical-text {
+    line-height: 1;
+    font-size: clamp(13px, 2.2vh, 16px);
+  }
+  .home-pill__vertical-text--stacked {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.25em;
+    line-height: 1;
+  }
+}
+
+.home-pill__unread-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 9.5px;
+  height: 9.5px;
+  border-radius: 50%;
+  background: #f43f5e;
+  border: 1.5px solid var(--home-pill);
+  box-shadow: 0 0 6px rgba(244, 63, 94, 0.75);
+  animation: pulse-badge 2.2s infinite ease-in-out;
+}
+
+@keyframes pulse-badge {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 4px rgba(244, 63, 94, 0.6);
+  }
+  50% {
+    transform: scale(1.22);
+    box-shadow: 0 0 8px rgba(244, 63, 94, 0.9);
+  }
+}
+
+/* Unread notices tile highlight red tint style */
+.home-pill--notices-unread {
+  background: color-mix(in srgb, #ba1a1a 12%, var(--home-pill)) !important;
+  color: #ffb4ab !important;
+}
+
+body.mode-light .home-pill--notices-unread {
+  color: var(--m3-error) !important;
+}
+
+.home-pill--notices-unread:hover {
+  background: color-mix(in srgb, #ba1a1a 18%, var(--home-pill)) !important;
+}
+
+.home-pill--notices-unread:active {
+  background: color-mix(in srgb, #ba1a1a 24%, var(--home-pill)) !important;
+}
+
+.home-pill--notices-unread .home-pill__unread-dot {
+  border-color: color-mix(in srgb, #ba1a1a 12%, var(--home-pill)) !important;
+}
+
+
+/* Match phone frame background (removes “inner box” on desktop preview) */
+.mobile-screen-viewport:has(.home-screen),
+.mobile-device-simulator:has(.home-screen) {
+  background-color: var(--m3-home-surface);
+}
+
+.mobile-screen-viewport:has(.m3-screen),
+.mobile-device-simulator:has(.m3-screen) {
+  background-color: var(--m3-surface);
+}
+
+/* Mobile device frame simulation */
+.mobile-device-simulator {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--m3-surface-container-lowest);
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.mobile-screen-viewport {
+  width: 100%;
+  max-width: 412px; /* Perfect sleek modern iPhone aspect ratio width */
+  height: 88vh;
+  max-height: 880px;
+  min-height: 760px;
+  background-color: var(--m3-surface);
+  border-radius: 40px; 
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  border: 8.5px solid var(--m3-surface-container-highest);
+  overflow: clip; /* clip instead of hidden — avoids stacking context that blocks backdrop-filter in descendants */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  transition: border-radius 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+}
+
+/* Ensure absolute viewport fills on small screens */
+@media (max-width: 1024px) {
+  .mobile-device-simulator {
+    padding: 0;
+    background-color: transparent;
+  }
+  .mobile-screen-viewport {
+    max-width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    min-height: 100vh;
+    border-radius: 0;
+    border: none;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* Force-hide native select dropdown arrows across all browsers */
+select {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+select::-ms-expand {
+  display: none !important;
+}
+
+/* Enforce premium Google Sans Flex font globally, including for buttons and form elements */
+html,
+body,
+button,
+input,
+select,
+textarea,
+.font-sans {
+  font-family: "Google Sans Flex", "Roboto Flex", Roboto, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+/* ─── Bouncy entrance animations ───────────────────────────────────────────── */
+@keyframes m3-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes m3-bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.94) translateY(10px);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.025) translateY(-3px);
+  }
+  78% {
+    transform: scale(0.995) translateY(1px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes m3-pill-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  78% {
+    transform: scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes m3-header-slide {
+  0% {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Home screen entrance */
+.home-screen {
+  animation: m3-bounce-in 0.45s var(--m3-ease-spring) both;
+}
+
+.home-screen__header {
+  animation: m3-header-slide 0.4s var(--m3-ease-spring) 0.05s both;
+}
+
+.home-screen__chips {
+  animation: m3-bounce-in 0.4s var(--m3-ease-spring) 0.08s both;
+}
+
+/* Staggered pill entrance on the home grid */
+.home-screen__grid .home-pill {
+  animation: m3-pill-pop 0.38s var(--m3-ease-spring) both;
+}
+.home-screen__grid .home-pill:nth-child(1) { animation-delay: 0.06s; }
+.home-screen__grid .home-pill:nth-child(2) { animation-delay: 0.10s; }
+.home-screen__grid .home-pill:nth-child(3) { animation-delay: 0.14s; }
+.home-screen__grid .home-pill:nth-child(4) { animation-delay: 0.18s; }
+.home-screen__grid .home-pill:nth-child(5) { animation-delay: 0.22s; }
+.home-screen__grid .home-pill:nth-child(6) { animation-delay: 0.26s; }
+.home-screen__grid .home-pill:nth-child(7) { animation-delay: 0.30s; }
+.home-screen__grid .home-pill:nth-child(8) { animation-delay: 0.34s; }
+
+/* M3 screen entrances (Notices, Timetable, Mess, etc.) */
+.m3-screen {
+  /* Removed animation to prevent compositor layer contexts from breaking backdrop-filter */
+}
+
+/* Module screen entrances (Canteen, SkillSwap, PeerChat, StudentDashboard) */
+.canteen-dashboard,
+.skillgigs-module,
+.peer-chat-container,
+.student-dashboard-shell {
+  /* Removed animation to prevent compositor layer contexts from breaking backdrop-filter */
+}
+
+/* Fade in scrollable inner contents — DISABLED: animation creates compositor layer that breaks backdrop-filter on the header */
+.m3-screen__scroll {
+  /* animation removed to fix backdrop-filter blur */
+}
+
+/* Immersive overlay screen entrances (Payment, QR Pass, Success) */
+.campos-dashboard > main > div[class*="absolute inset-0"] {
+  animation: m3-fade-in 0.3s ease-out both;
+}
+
+@keyframes m3-nav-slide-up {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 40px) scale(0.92);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(-50%, -8px) scale(1.04);
+  }
+  85% {
+    transform: translate(-50%, -2px) scale(0.985);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -4px) scale(1);
+  }
+}
+
+.m3-nav-entrance {
+  animation: m3-nav-slide-up 0.55s cubic-bezier(0.34, 1.25, 0.64, 1) both;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .home-screen,
+  .home-screen__header,
+  .home-screen__chips,
+  .home-screen__grid .home-pill,
+  .m3-screen,
+  .canteen-dashboard,
+  .skillgigs-module,
+  .peer-chat-container,
+  .student-dashboard-shell,
+  .m3-nav-entrance {
+    animation: none !important;
+  }
+}
+
+/* Force mobile-first/stacked layout rules inside the mobile screen simulator on desktop viewports */
+.mobile-screen-viewport .sm\:grid-cols-2,
+.mobile-screen-viewport .md\:grid-cols-2 {
+  grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+}
+.mobile-screen-viewport .sm\:grid-cols-3,
+.mobile-screen-viewport .md\:grid-cols-3 {
+  grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+}
+.mobile-screen-viewport .lg\:grid-cols-3 {
+  grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+}
+.mobile-screen-viewport .lg\:col-span-1,
+.mobile-screen-viewport .lg\:col-span-2 {
+  grid-column: span 1 / span 1 !important;
+}
+.mobile-screen-viewport .sm\:flex-row {
+  flex-direction: column !important;
+}
+.mobile-screen-viewport .sm\:items-center {
+  align-items: stretch !important;
+}
+.mobile-screen-viewport .sm\:max-w-xs {
+  max-width: 100% !important;
+}
+.mobile-screen-viewport .sm\:w-auto {
+  width: 100% !important;
+}
+.mobile-screen-viewport .sm\:flex-none {
+  flex: 1 1 0% !important;
+}
+
+/* Premium Loading Screen Progress Runner */
+@keyframes loading-runner {
+  0% {
+    left: -50%;
+    width: 30%;
+  }
+  50% {
+    width: 60%;
+  }
+  100% {
+    left: 110%;
+    width: 30%;
+  }
+}
+
+.animate-loading-runner {
+  animation: loading-runner 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Custom Fade-in & Dropdown Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out forwards;
+}
+
+@keyframes dropdown-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-dropdown {
+  animation: dropdown-fade-in 0.12s cubic-bezier(0.3, 0, 0.2, 1) forwards;
+}
+
+/* Smooth global transitions for theme/mode switching */
+body,
+.m3-surface-card,
+.m3-filled-field,
+.m3-filled-button,
+.m3-tonal-button,
+.m3-outlined-button,
+.m3-segmented-chip,
+.home-screen__more-btn,
+.home-screen__theme-btn,
+.home-screen__logout-btn,
+.home-screen__menu-dropdown,
+.home-screen__menu-item,
+.canteen-cart-btn,
+.m3-badge,
+h1, h2, h3, h4, h5, h6,
+p, span, label, svg {
+  transition: background-color 0.4s cubic-bezier(0.2, 0, 0, 1),
+              color 0.4s cubic-bezier(0.2, 0, 0, 1),
+              border-color 0.4s cubic-bezier(0.2, 0, 0, 1),
+              fill 0.4s cubic-bezier(0.2, 0, 0, 1),
+              stroke 0.4s cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 0.4s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* Cart Badge Bounce Keyframe Animation */
+@keyframes cart-badge-bounce {
+  0% { transform: scale(0.6); }
+  50% { transform: scale(1.3); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+.animate-cart-bounce {
+  animation: cart-badge-bounce 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}

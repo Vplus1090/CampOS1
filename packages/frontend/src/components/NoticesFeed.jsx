@@ -1,0 +1,375 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, X, Megaphone, User, Trash, Warning, CaretDown } from '@phosphor-icons/react';
+import { API_BASE } from '../config/api';
+import M3ScreenHeader from './M3ScreenHeader';
+import useCachedFetch from '../hooks/useCachedFetch';
+import OfflineBanner from './OfflineBanner';
+
+export default function NoticesFeed({ currentUser, onUpdate, setActiveTab }) {
+  const [filterPriority, setFilterPriority] = useState('All');
+  const [showModal, setShowModal] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // New notice form state
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [priority, setPriority] = useState('Medium');
+  const [postedBy, setPostedBy] = useState(currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : '');
+  const [submitting, setSubmitting] = useState(false);
+
+  const isSuperAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin';
+
+  const handleScroll = (e) => {
+    const currentScrollTop = e.target.scrollTop;
+    setIsScrolled(currentScrollTop > 10);
+  };
+
+  const cacheKey = `notices-${filterPriority}`;
+  const fetcher = useCallback(async () => {
+    const url = filterPriority === 'All'
+      ? `${API_BASE}/api/notices`
+      : `${API_BASE}/api/notices?priority=${filterPriority}`;
+    const res = await fetch(url, { credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to load notices');
+    return res.json();
+  }, [filterPriority]);
+
+  const { data: noticesRaw = [], isLoading: loading, isRefreshing, error, isOffline, revalidate } =
+    useCachedFetch(cacheKey, fetcher, { ttlHours: 1, deps: [filterPriority] });
+
+  const notices = noticesRaw || [];
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!title || !content || !postedBy) return;
+
+    try {
+      setSubmitting(true);
+      const res = await fetch(`${API_BASE}/api/notices`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          Title: title,
+          Content: content,
+          PriorityLevel: priority,
+          PostedBy: postedBy,
+        }),
+        credentials: 'include',
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to post announcement');
+      }
+      
+      // Reset form
+      setTitle('');
+      setContent('');
+      setPriority('Medium');
+      setShowModal(false);
+      
+      // Refresh list
+      fetchNotices();
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this notice?')) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/notices/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to delete notice');
+      }
+      
+      // Refresh list
+      fetchNotices();
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const options = { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  return (
+    <div className="m3-screen notices-dashboard">
+      <M3ScreenHeader
+        title="Campus Notices"
+        subtitle="Announcements & Alerts"
+        isScrolled={isScrolled}
+        onBack={() => setActiveTab('home')}
+      />
+
+      <div onScroll={handleScroll} className="m3-screen__scroll space-y-5" style={{ paddingBottom: 96 }}>
+        <OfflineBanner
+          isOffline={isOffline}
+          isRefreshing={isRefreshing}
+          error={error}
+          isStale={notices.length > 0}
+          onRetry={revalidate}
+        />
+
+        {/* Filters */}
+        <div className="flex items-center justify-center w-full pt-5 pb-0 !-mb-2.5 shrink-0 px-1">
+          <div className="m3-segmented-chips">
+            {['All', 'High', 'Medium', 'Low'].map((p) => {
+              const isActive = filterPriority === p;
+              return (
+                <button
+                  key={p}
+                  data-haptic="light"
+                  className={`px-4 py-2 text-xs font-extrabold cursor-pointer shrink-0 border relative transition-colors duration-200 ${
+                    isActive
+                      ? 'text-m3-onPrimary border-transparent !bg-transparent'
+                      : 'bg-m3-surfaceContainerHighest text-m3-onSurfaceVariant hover:bg-m3-surfaceContainerLow border-m3-outlineVariant/30'
+                  }`}
+                  style={{ borderRadius: '24px' }}
+                  onClick={() => setFilterPriority(p)}
+                  type="button"
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="active-notices-chip"
+                      className="absolute inset-0 bg-m3-primary rounded-full z-0"
+                      style={{ borderRadius: '24px' }}
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10">{p}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Content Feed */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={filterPriority}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.18, ease: "easeInOut" }}
+            className="w-full flex flex-col"
+          >
+            {loading && notices.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <div className="w-8 h-8 rounded-full border border-transparent border-t-m3-primary border-r-m3-primary animate-spin" />
+                <p className="text-xs font-semibold m3-text-variant uppercase tracking-widest">Syncing notice feed...</p>
+              </div>
+            ) : error && notices.length === 0 ? (
+              <div className="m3-surface-card p-8 flex flex-col items-center justify-center gap-4 text-center">
+                <p className="m3-body-medium m3-text-variant">Couldn't load notices. Check your connection.</p>
+                <button className="m3-filled-button max-w-[160px] min-h-[40px] text-xs py-2" onClick={revalidate}>Retry</button>
+              </div>
+            ) : notices.length === 0 ? (
+              <div className="m3-surface-card p-12 flex items-center justify-center text-center">
+                <p className="text-xs font-semibold m3-text-variant uppercase tracking-widest">📭 No announcements found.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-5">
+                {notices.map((notice) => {
+                  const priority = notice.PriorityLevel.toLowerCase();
+                  
+                  const badgeStyle = 
+                    priority === 'high' 
+                      ? 'bg-m3-errorContainer/15 text-m3-error border-m3-error/20' 
+                      : priority === 'medium'
+                      ? 'bg-m3-primaryContainer/20 text-m3-primary border-m3-primaryContainer/40'
+                      : 'bg-m3-surfaceContainerHighest text-m3-onSurfaceVariant border-m3-outlineVariant/60';
+
+                  return (
+                    <article 
+                      key={notice.id || notice._id} 
+                      id={`notice-${notice.id || notice._id}`}
+                      className="m3-surface-card flex flex-col gap-4 text-left"
+                    >
+                      <div 
+                        className="flex justify-between items-center w-full pb-3.5"
+                        style={{ borderBottom: '1px solid color-mix(in srgb, var(--m3-outline-variant) 70%, transparent)' }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="m3-icon-badge">
+                            <Megaphone size={18} />
+                          </div>
+                          <span className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${badgeStyle}`}>
+                            {notice.PriorityLevel}
+                          </span>
+                        </div>
+                        <span className="text-[11px] font-medium m3-text-variant">
+                          {formatDate(notice.Date || notice.createdAt)}
+                        </span>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <h3 className="m3-title-medium select-text">
+                          {notice.Title}
+                        </h3>
+                        <p className="m3-body-medium m3-text-variant leading-relaxed select-text">
+                          {notice.Content}
+                        </p>
+                      </div>
+                      
+                      <div 
+                        className="flex justify-between items-center w-full pt-3.5"
+                        style={{ borderTop: '1px solid color-mix(in srgb, var(--m3-outline-variant) 60%, transparent)' }}
+                      >
+                        <span className="text-[11px] font-medium m3-text-variant flex items-center gap-1.5">
+                          <User size={12} className="text-m3-primary" /> {notice.PostedBy}
+                        </span>
+                        
+                        {/* Only Super Admin can delete announcements */}
+                        {isSuperAdmin && (
+                          <button 
+                            className="w-8 h-8 rounded-full hover:bg-m3-errorContainer/15 text-m3-error flex items-center justify-center transition-colors duration-200 active:scale-90" data-haptic="medium"
+                            onClick={() => handleDelete(notice.id || notice._id)}
+                            title="Remove Announcement"
+                            type="button"
+                          >
+                            <Trash size={16} />
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+      </div>
+
+      {/* Super Admin Extended FAB */}
+      {isSuperAdmin && (
+        <button
+          onClick={() => setShowModal(true)}
+          className="absolute bottom-6 right-6 z-30 bg-m3-primary text-m3-onPrimary rounded-[16px] px-5 h-14 flex items-center gap-2.5 font-bold shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer" data-haptic="medium"
+          type="button"
+        >
+          <Plus size={20} strokeWidth={2.5} />
+          <span className="text-sm tracking-wide">Post Notice</span>
+        </button>
+      )}
+
+      {/* Creation Modal Floating Glass Pop Up */}
+      <AnimatePresence>
+        {showModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/50 z-[99999] flex items-center justify-center p-4"
+            onClick={() => setShowModal(false)}
+          >
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+              className="backdrop-blur-xl rounded-[28px] p-6 w-full max-w-md shadow-2xl flex flex-col gap-6 text-left border border-white/10"
+              style={{ backgroundColor: 'color-mix(in srgb, var(--m3-surface-container) 75%, transparent)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-m3-onSurface flex items-center gap-2">
+                  <Megaphone size={20} className="text-m3-primary" /> Post Campus Notice
+                </h3>
+                <button 
+                  onClick={() => setShowModal(false)} 
+                  className="p-2 -mr-2 text-m3-onSurfaceVariant hover:text-m3-onSurface rounded-full hover:bg-m3-surfaceContainerHighest transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
+                <div className="flex flex-col gap-1.5">
+                  <label className="m3-title-small m3-text-variant pl-1" htmlFor="notice-title">Notice Title</label>
+                  <input
+                    id="notice-title"
+                    type="text"
+                    placeholder="e.g., Spring Hackathon 2026"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                    className="m3-filled-field"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="m3-title-small m3-text-variant pl-1" htmlFor="notice-postedby">Posted By</label>
+                  <input
+                    id="notice-postedby"
+                    type="text"
+                    placeholder="e.g., Dean, Administrator"
+                    value={postedBy}
+                    onChange={(e) => setPostedBy(e.target.value)}
+                    required
+                    className="m3-filled-field"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="m3-title-small m3-text-variant pl-1" htmlFor="notice-priority">Priority Level</label>
+                  <div className="m3-select-wrap">
+                    <select
+                       id="notice-priority"
+                      value={priority}
+                      onChange={(e) => setPriority(e.target.value)}
+                      className="m3-select"
+                    >
+                      <option value="Low" className="bg-m3-surfaceContainer text-m3-onSurface">Low - Casual</option>
+                      <option value="Medium" className="bg-m3-surfaceContainer text-m3-onSurface">Medium - Academic</option>
+                      <option value="High" className="bg-m3-surfaceContainer text-m3-onSurface">High - Critical</option>
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-m3-primary">
+                      <CaretDown size={14} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="m3-title-small m3-text-variant pl-1" htmlFor="notice-content">Notice Content</label>
+                  <textarea
+                    id="notice-content"
+                    rows="4"
+                    placeholder="Announcement details..."
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    required
+                    className="m3-filled-field h-auto py-3 resize-none"
+                  />
+                </div>
+
+                <div className="flex justify-between items-center gap-3 pt-3">
+                  <button 
+                    type="submit" 
+                    className="flex-grow m3-filled-button min-h-[52px] cursor-pointer"
+                    disabled={submitting}
+                  >
+                    {submitting ? 'Posting...' : 'Publish'}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
