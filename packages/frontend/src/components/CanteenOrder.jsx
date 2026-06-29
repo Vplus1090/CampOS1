@@ -4,6 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import M3ScreenHeader from './M3ScreenHeader';
 import { API_BASE } from '../config/api';
 
+// Helper function to check if item is Vegetarian
+const isVegItem = (item) => {
+  if (item.IsVeg !== undefined) return item.IsVeg;
+  const nonVegKeywords = ['chicken', 'egg', 'fish', 'meat', 'mutton', 'prawn', 'pepperoni', 'beef', 'pork', 'kabab', 'kebab', 'tikka', 'shawarma', 'non-veg', 'non veg', 'bacon', 'salami', 'keema'];
+  const nameLower = (item.Name || '').toLowerCase();
+  return !nonVegKeywords.some(keyword => nameLower.includes(keyword));
+};
+
 export default function CanteenOrder({ currentUser, onUpdate, setActiveTab, triggerPayment, cart = [], setCart, isCartCheckout = false, initialAdminSubTab }) {
   const [menu, setMenu] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -12,6 +20,8 @@ export default function CanteenOrder({ currentUser, onUpdate, setActiveTab, trig
   
   // MagnifyingGlass query state
   const [searchQuery, setSearchQuery] = useState('');
+  // Diet filter state ('All' | 'Veg' | 'NonVeg')
+  const [vegFilter, setVegFilter] = useState('All');
   
   // Checkout state
   const [studentId, setStudentId] = useState(currentUser ? currentUser.firstName : '');
@@ -466,7 +476,12 @@ export default function CanteenOrder({ currentUser, onUpdate, setActiveTab, trig
 
   const filteredMenu = menu
     .filter((item) => selectedCategory === 'All' || item.Category === selectedCategory)
-    .filter((item) => item.Name.toLowerCase().includes(searchQuery.toLowerCase()));
+    .filter((item) => item.Name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter((item) => {
+      if (vegFilter === 'All') return true;
+      const isVeg = isVegItem(item);
+      return vegFilter === 'Veg' ? isVeg : !isVeg;
+    });
 
   /* ───────────────────── Checkout View ───────────────────── */
   if (isCartCheckout) {
@@ -739,19 +754,64 @@ export default function CanteenOrder({ currentUser, onUpdate, setActiveTab, trig
             className="flex-grow w-full flex flex-col gap-4"
           >
 
-            {/* MagnifyingGlass Field */}
+            {/* MagnifyingGlass Field & Diet Filters */}
         {!loading && !error && (!isCanteenAdmin || adminSubTab === 'menu') && (
-          <div className="relative w-full shrink-0 mb-1">
-            <span className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-m3-outline z-10">
-              <MagnifyingGlass size={16} />
-            </span>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search canteen menu..."
-              className="m3-filled-field !pl-12 !pr-4 !rounded-full !h-[48px] text-sm"
-            />
+          <div className="flex flex-col gap-2.5 w-full shrink-0 mb-1">
+            <div className="relative w-full">
+              <span className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-m3-outline z-10">
+                <MagnifyingGlass size={16} />
+              </span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search canteen menu..."
+                className="m3-filled-field !pl-12 !pr-4 !rounded-full !h-[48px] text-sm"
+              />
+            </div>
+            
+            {/* Quick Diet Filters */}
+            <div className="flex gap-2 select-none overflow-x-auto pb-0.5">
+              <button
+                onClick={() => setVegFilter('All')}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border shrink-0 cursor-pointer flex items-center justify-center ${
+                  vegFilter === 'All'
+                    ? 'bg-m3-primaryContainer border-m3-primary text-m3-onPrimaryContainer shadow-sm'
+                    : 'bg-m3-surfaceContainer border-m3-outlineVariant/30 text-m3-onSurfaceVariant hover:bg-m3-surfaceContainerHighest'
+                }`}
+                type="button"
+              >
+                <span>All Items</span>
+              </button>
+              <button
+                onClick={() => setVegFilter('Veg')}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                  vegFilter === 'Veg'
+                    ? 'bg-green-100 border-green-500 text-green-800 shadow-sm'
+                    : 'bg-m3-surfaceContainer border-m3-outlineVariant/30 text-m3-onSurfaceVariant hover:bg-m3-surfaceContainerHighest'
+                }`}
+                type="button"
+              >
+                <span className="w-3 h-3 border border-green-600 bg-green-50 flex items-center justify-center rounded-[3px] shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-600" />
+                </span>
+                <span>Veg Only</span>
+              </button>
+              <button
+                onClick={() => setVegFilter('NonVeg')}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                  vegFilter === 'NonVeg'
+                    ? 'bg-red-100 border-red-500 text-red-800 shadow-sm'
+                    : 'bg-m3-surfaceContainer border-m3-outlineVariant/30 text-m3-onSurfaceVariant hover:bg-m3-surfaceContainerHighest'
+                }`}
+                type="button"
+              >
+                <span className="w-3 h-3 border border-red-600 bg-red-50 flex items-center justify-center rounded-[3px] shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
+                </span>
+                <span>Non-Veg</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -862,10 +922,26 @@ export default function CanteenOrder({ currentUser, onUpdate, setActiveTab, trig
                       </div>
                     ) : (
                       <>
-                        {/* Item Name */}
-                        <h4 className="text-base font-extrabold text-m3-onSurface tracking-wide leading-snug">
-                          {item.Name}
-                        </h4>
+                        {/* Item Name & Veg/Non-Veg Badge */}
+                        <div className="flex items-center gap-2">
+                          <span 
+                            className={`w-3.5 h-3.5 border flex items-center justify-center rounded-[3px] shrink-0 ${
+                              isVegItem(item) 
+                                ? 'border-green-600 bg-green-50' 
+                                : 'border-red-600 bg-red-50'
+                            }`}
+                            title={isVegItem(item) ? 'Vegetarian' : 'Non-Vegetarian'}
+                          >
+                            <span 
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                isVegItem(item) ? 'bg-green-600' : 'bg-red-600'
+                              }`} 
+                            />
+                          </span>
+                          <h4 className="text-base font-extrabold text-m3-onSurface tracking-wide leading-snug">
+                            {item.Name}
+                          </h4>
+                        </div>
 
                         <div className="flex items-center gap-2">
                           <span className="m3-badge text-[11px] font-bold">₹{item.Price}</span>
