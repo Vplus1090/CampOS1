@@ -4,6 +4,14 @@ import { authenticate, requireRole } from '../middleware/auth.js';
 
 const router = Router();
 
+// Helper validation for Google Drive link format
+const isValidDriveLink = (link) => {
+  if (!link) return false;
+  const drivePattern = /^https?:\/\/(drive|docs)\.google\.com\/(file\/d\/[a-zA-Z0-9_-]+|folders\/[a-zA-Z0-9_-]+|open\?id=[a-zA-Z0-9_-]+|drive\/folders\/[a-zA-Z0-9_-]+)/;
+  return drivePattern.test(link);
+};
+
+
 /**
  * @route   GET /api/studymaterials
  * @desc    Get all study materials
@@ -53,6 +61,19 @@ router.post('/', authenticate, requireRole('super_admin'), async (req, res, next
       return next(error);
     }
 
+    if (!isValidDriveLink(driveLink)) {
+      const error = new Error('Invalid Google Drive link format.');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    const semNum = parseInt(semester, 10);
+    if (isNaN(semNum) || semNum < 1 || semNum > 8) {
+      const error = new Error('Semester must be an integer between 1 and 8.');
+      error.statusCode = 400;
+      return next(error);
+    }
+
     const material = await StudyMaterial.create({
       name,
       driveLink,
@@ -78,6 +99,21 @@ router.post('/', authenticate, requireRole('super_admin'), async (req, res, next
 router.put('/:id', authenticate, requireRole('super_admin'), async (req, res, next) => {
   try {
     const { name, driveLink, branch, semester, type, code, size, subject } = req.body;
+
+    if (driveLink !== undefined && !isValidDriveLink(driveLink)) {
+      const error = new Error('Invalid Google Drive link format.');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    if (semester !== undefined) {
+      const semNum = parseInt(semester, 10);
+      if (isNaN(semNum) || semNum < 1 || semNum > 8) {
+        const error = new Error('Semester must be an integer between 1 and 8.');
+        error.statusCode = 400;
+        return next(error);
+      }
+    }
 
     const material = await StudyMaterial.findById(req.params.id);
     if (!material) {
