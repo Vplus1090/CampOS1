@@ -18,6 +18,15 @@ export default function MessMenu({ currentUser, setActiveTab, triggerPayment }) 
   const [selectedDay, setSelectedDay] = useState(getTodayName());
   const [quantity, setQuantity] = useState(1);
 
+  // Mess meal interactive rating states
+  const [mealRatings, setMealRatings] = useState({});
+  const [ratedMeals, setRatedMeals] = useState({});
+
+  const handleRateMeal = (mealId, rating) => {
+    setMealRatings(prev => ({ ...prev, [mealId]: rating }));
+    setRatedMeals(prev => ({ ...prev, [mealId]: true }));
+  };
+
   // Caching layer using useCachedFetch
   const { data: dailyMenuRaw = [], isLoading: dailyLoading, isRefreshing: dailyRefreshing, error: dailyError, isOffline: dailyOffline, revalidate: revalidateDaily } =
     useCachedFetch('mess-daily', async () => {
@@ -387,6 +396,45 @@ export default function MessMenu({ currentUser, setActiveTab, triggerPayment }) 
                         ) : (
                           <span className="text-xs text-m3-onSurfaceVariant/60 italic pl-1">No menu declared</span>
                         )}
+                      </div>
+
+                      {/* Interactive Meal Rating Widget */}
+                      <div className="mt-1 pt-3 border-t flex flex-col gap-2" style={{ borderTopColor: 'color-mix(in srgb, var(--m3-outline-variant) 45%, transparent)' }}>
+                        <div className="flex justify-between items-center select-none">
+                          <span className="text-[10px] font-bold text-m3-onSurfaceVariant/70 uppercase tracking-wider">
+                            {ratedMeals[meal.mealId] ? 'Feedback submitted!' : 'Rate this meal:'}
+                          </span>
+                          {mealRatings[meal.mealId] && (
+                            <span className="text-[10px] font-black text-m3-primary uppercase tracking-widest bg-m3-primaryContainer px-1.5 py-0.5 rounded">
+                              {mealRatings[meal.mealId]} / 5
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => {
+                            const isSelected = mealRatings[meal.mealId] >= star;
+                            const isSubmitted = ratedMeals[meal.mealId];
+                            return (
+                              <button
+                                key={star}
+                                onClick={() => !isSubmitted && handleRateMeal(meal.mealId, star)}
+                                disabled={isSubmitted}
+                                className={`text-lg transition-all duration-200 cursor-pointer p-0.5 ${
+                                  isSubmitted ? 'opacity-55' : 'hover:scale-125'
+                                }`}
+                                type="button"
+                                style={{
+                                  border: 'none',
+                                  background: 'none',
+                                  color: isSelected ? '#fbbf24' : 'color-mix(in srgb, var(--m3-outline) 60%, transparent)'
+                                }}
+                                title={`Rate ${star} star`}
+                              >
+                                {isSelected ? '★' : '☆'}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </article>
                   ));
