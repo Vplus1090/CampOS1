@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function AcademicCalendar({ currentUser, setActiveTab }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [events, setEvents] = useState([]);
+  const [selectedFilter, setSelectedFilter] = useState('All');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -123,6 +124,34 @@ export default function AcademicCalendar({ currentUser, setActiveTab }) {
 
   const goBack = () => setActiveTab && setActiveTab('home');
 
+  const filteredEvents = React.useMemo(() => {
+    return events.filter((event) => {
+      if (selectedFilter === 'All') return true;
+      if (selectedFilter === 'Exams') {
+        return (
+          event.category.toLowerCase().includes('exam') || 
+          event.category.toLowerCase().includes('viva') || 
+          (event.tags && event.tags.some(t => t.toLowerCase().includes('exam')))
+        );
+      }
+      if (selectedFilter === 'Deadlines') {
+        return (
+          event.category.toLowerCase().includes('deadline') || 
+          (event.tags && event.tags.some(t => t.toLowerCase().includes('deadline') || t.toLowerCase().includes('collection')))
+        );
+      }
+      if (selectedFilter === 'Academic') {
+        return (
+          event.category.toLowerCase().includes('class') || 
+          event.category.toLowerCase().includes('project') || 
+          event.category.toLowerCase().includes('dissertation') || 
+          (event.tags && event.tags.some(t => t.toLowerCase().includes('sem') || t.toLowerCase().includes('academic')))
+        );
+      }
+      return true;
+    });
+  }, [events, selectedFilter]);
+
   return (
     <div className="m3-screen academic-calendar-dashboard">
       <M3ScreenHeader
@@ -133,6 +162,37 @@ export default function AcademicCalendar({ currentUser, setActiveTab }) {
       />
 
       <div onScroll={handleScroll} className="m3-screen__scroll !gap-4 relative" style={{ paddingBottom: 88 }}>
+        {/* Category Filter Chips */}
+        <div className="m3-segmented-chips justify-center flex-wrap py-1 shrink-0">
+          {['All', 'Exams', 'Deadlines', 'Academic'].map((cat) => {
+            const isActive = selectedFilter === cat;
+            return (
+              <button
+                key={cat}
+                type="button"
+                data-haptic="light"
+                onClick={() => setSelectedFilter(cat)}
+                className={`px-4 py-2 text-xs font-extrabold cursor-pointer shrink-0 border relative transition-colors duration-200 ${
+                  isActive
+                    ? 'text-m3-onPrimary border-transparent !bg-transparent'
+                    : 'bg-m3-surfaceContainerHighest text-m3-onSurfaceVariant hover:bg-m3-surfaceContainerLow border-m3-outlineVariant/30'
+                }`}
+                style={{ borderRadius: '24px' }}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="active-calendar-chip"
+                    className="absolute inset-0 bg-m3-primary rounded-full z-0"
+                    style={{ borderRadius: '24px' }}
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{cat}</span>
+              </button>
+            );
+          })}
+        </div>
+
         {/* Loading State */}
         {loading && events.length === 0 && (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 py-16 text-center select-none">
@@ -158,8 +218,17 @@ export default function AcademicCalendar({ currentUser, setActiveTab }) {
           </div>
         )}
 
+        {/* Empty State (No Filter Matches) */}
+        {!loading && !error && events.length > 0 && filteredEvents.length === 0 && (
+          <div className="m3-surface-card p-8 flex flex-col items-center justify-center gap-3 text-center select-none">
+            <span className="text-3xl opacity-40">🔍</span>
+            <h4 className="text-sm text-m3-onSurface font-extrabold uppercase tracking-widest">No Matches Found</h4>
+            <span className="text-xs text-slate-400 font-medium">No events found matching category: "{selectedFilter}"</span>
+          </div>
+        )}
+
         {/* Events list */}
-        {!loading && !error && events.map((event) => {
+        {!loading && !error && filteredEvents.map((event) => {
           return (
             <article key={event._id} className="m3-surface-card flex flex-col gap-4 text-left relative overflow-hidden shrink-0">
               <div
