@@ -11,8 +11,25 @@ const router = Router();
  */
 router.get('/', async (req, res, next) => {
   try {
-    // Return all events sorted by date or creation
-    const events = await CalendarEvent.find({}).sort({ createdAt: 1 });
+    const { startDate, endDate, category } = req.query;
+    const filter = {};
+
+    if (category) {
+      filter.category = category;
+    }
+
+    if (startDate || endDate) {
+      filter.date = {};
+      if (startDate) {
+        filter.date.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        filter.date.$lte = new Date(endDate);
+      }
+    }
+
+    // Return events matching the query filter, sorted by date
+    const events = await CalendarEvent.find(filter).sort({ date: 1 });
     res.json(events);
   } catch (err) {
     next(err);
