@@ -108,6 +108,34 @@ export default function SkillSwapGrid({ currentUser, onUpdate, setActiveTab, onS
   const [skillWanted, setSkillWanted] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Swap Request Form Modal State
+  const [activeRequestGig, setActiveRequestGig] = useState(null);
+  const [requestMessage, setRequestMessage] = useState('');
+  const [contactMethod, setContactMethod] = useState('in-app');
+  const [isSendingRequest, setIsSendingRequest] = useState(false);
+  const [requestSuccess, setRequestSuccess] = useState(false);
+
+  const handleOpenRequestModal = (gig) => {
+    setActiveRequestGig(gig);
+    setRequestMessage(`Hey! I would love to swap my skill "${gig.SkillWanted}" with your skill "${gig.SkillOffered}". Let me know if you are interested!`);
+    setContactMethod('in-app');
+    setRequestSuccess(false);
+    setIsSendingRequest(false);
+  };
+
+  const handleSendSwapRequest = (e) => {
+    e.preventDefault();
+    setIsSendingRequest(true);
+    setTimeout(() => {
+      setIsSendingRequest(false);
+      setRequestSuccess(true);
+      setTimeout(() => {
+        handleStartChat(activeRequestGig.StudentName);
+        setActiveRequestGig(null);
+      }, 1500);
+    }, 1200);
+  };
+
   const isSuperAdmin = currentUser?.role === 'super_admin';
   const isModerator = currentUser?.role === 'admin' || currentUser?.role === 'super_admin';
   const isStudent = currentUser?.role === 'student';
@@ -920,11 +948,11 @@ export default function SkillSwapGrid({ currentUser, onUpdate, setActiveTab, onS
                         </div>
                       ) : (
                         <button
-                          onClick={() => handleStartChat(gig.StudentName)}
-                          className="m3-filled-button bg-m3-secondaryContainer text-m3-onSecondaryContainer hover:brightness-110 !min-h-[44px] flex items-center justify-center gap-2 font-bold text-xs"
+                          onClick={() => handleOpenRequestModal(gig)}
+                          className="m3-filled-button bg-m3-primaryContainer text-m3-onPrimaryContainer hover:brightness-110 !min-h-[44px] flex items-center justify-center gap-2 font-bold text-xs"
                           type="button"
                         >
-                          <ChatCircle size={15} /> Chat with {gig.StudentName}
+                          <Handshake size={16} /> Request Swap
                         </button>
                       )}
                     </div>
@@ -1095,6 +1123,111 @@ export default function SkillSwapGrid({ currentUser, onUpdate, setActiveTab, onS
           </div>
         </div>
       )}
+
+      {/* Swap Request / Contact Peer Modal Popup */}
+      <AnimatePresence>
+        {activeRequestGig && (
+          <div className="absolute inset-0 bg-black/60 z-[99999] flex items-center justify-center p-4" onClick={() => setActiveRequestGig(null)}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 15 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 350 }}
+              className="w-full max-w-md m3-frosted-dialog p-6 rounded-[28px] flex flex-col gap-4 max-h-[85vh] overflow-y-auto text-left"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b pb-3" style={{ borderBottomColor: 'color-mix(in srgb, var(--m3-outline-variant) 55%, transparent)' }}>
+                <h3 className="m3-title-medium font-bold text-m3-onSurface flex items-center gap-2">
+                  <Handshake size={20} className="text-m3-primary" /> Request Skill Swap
+                </h3>
+                <button
+                  className="w-8 h-8 rounded-full hover:bg-m3-surfaceContainerHighest text-m3-onSurfaceVariant flex items-center justify-center transition cursor-pointer font-bold border-none bg-transparent"
+                  onClick={() => setActiveRequestGig(null)}
+                  type="button"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {requestSuccess ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center gap-3">
+                  <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-green-600 animate-bounce">
+                    <CheckCircle size={32} />
+                  </div>
+                  <h4 className="text-sm font-bold text-m3-onSurface uppercase tracking-wider">Request Sent Successfully!</h4>
+                  <p className="text-xs text-m3-onSurfaceVariant max-w-[240px]">Connecting you with {activeRequestGig.StudentName} to discuss the swap details...</p>
+                </div>
+              ) : (
+                <form onSubmit={handleSendSwapRequest} className="flex flex-col gap-4">
+                  {/* Gig Summary details */}
+                  <div className="bg-m3-surfaceContainerLow p-4 rounded-2xl flex flex-col gap-1.5 border border-m3-outlineVariant/20">
+                    <span className="text-[9px] font-bold text-m3-primary uppercase tracking-widest">Listing Details</span>
+                    <p className="text-xs font-bold text-m3-onSurface">Offering: {activeRequestGig.SkillOffered}</p>
+                    <p className="text-xs text-m3-onSurfaceVariant">Looking for: {activeRequestGig.SkillWanted}</p>
+                    <p className="text-[10px] text-m3-onSurfaceVariant/60 font-medium">Author: {activeRequestGig.StudentName}</p>
+                  </div>
+
+                  {/* Message Input */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-m3-onSurfaceVariant uppercase tracking-wider pl-1">Introduction Message</label>
+                    <textarea
+                      value={requestMessage}
+                      onChange={(e) => setRequestMessage(e.target.value)}
+                      rows={3}
+                      className="m3-filled-field !py-2.5 !px-3.5 !rounded-2xl text-xs resize-none"
+                      placeholder="Write a message to introduce yourself..."
+                      required
+                    />
+                  </div>
+
+                  {/* Preferred Contact Method */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-m3-onSurfaceVariant uppercase tracking-wider pl-1">Preferred Contact Method</label>
+                    <div className="m3-select-wrap">
+                      <select
+                        value={contactMethod}
+                        onChange={(e) => setContactMethod(e.target.value)}
+                        className="m3-select !h-10 !py-1 !text-xs !rounded-2xl"
+                      >
+                        <option value="in-app">In-App Chat (Recommended)</option>
+                        <option value="whatsapp">WhatsApp / Phone</option>
+                        <option value="email">Institutional Email</option>
+                        <option value="discord">Discord / Telegram</option>
+                      </select>
+                      <div className="absolute -translate-y-1/2 pointer-events-none text-m3-onSurfaceVariant right-3 top-1/2">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Submit buttons */}
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      type="button"
+                      className="flex-1 h-[44px] rounded-full border border-m3-outlineVariant/50 bg-transparent hover:bg-m3-surfaceContainerLow text-m3-onSurfaceVariant font-bold text-xs uppercase tracking-wider cursor-pointer transition-all"
+                      onClick={() => setActiveRequestGig(null)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSendingRequest}
+                      className="flex-1 h-[44px] rounded-full border-none bg-m3-primary text-m3-onPrimary hover:brightness-110 font-bold text-xs uppercase tracking-wider cursor-pointer transition-all flex items-center justify-center gap-1.5"
+                    >
+                      {isSendingRequest ? (
+                        <ArrowsCounterClockwise className="animate-spin" size={14} />
+                      ) : (
+                        <PaperPlaneRight size={14} />
+                      )}
+                      <span>{isSendingRequest ? 'Sending...' : 'Send Request'}</span>
+                    </button>
+                  </div>
+                </form>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
