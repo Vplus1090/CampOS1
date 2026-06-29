@@ -812,8 +812,11 @@ export default function CampAi({ currentUser, setActiveTab }) {
                     messages
                       .filter((msg) => msg.id !== 'welcome')
                       .map((msg) => (
-                        <div
+                        <motion.div
                           key={msg.id}
+                          initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{ type: "spring", stiffness: 350, damping: 28 }}
                           className={`flex flex-col ${
                             msg.role === 'user' ? 'self-end items-end max-w-[80%]' : 'self-start items-start w-full'
                           }`}
@@ -948,7 +951,7 @@ export default function CampAi({ currentUser, setActiveTab }) {
                               </div>
                             </div>
                           )}
-                        </div>
+                        </motion.div>
                       ))
                   )}
 
