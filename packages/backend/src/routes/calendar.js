@@ -1,8 +1,16 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import CalendarEvent from '../models/CalendarEvent.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 
 const router = Router();
+
+// Helper validation for date string format (ISO or standard parsable date)
+const isValidDateString = (dateStr) => {
+  if (!dateStr) return false;
+  const parsed = Date.parse(dateStr);
+  return !isNaN(parsed);
+};
 
 /**
  * @route   GET /api/calendar
@@ -51,6 +59,18 @@ router.post('/', authenticate, requireRole('admin', 'super_admin'), async (req, 
       return next(error);
     }
 
+    if (!isValidDateString(date)) {
+      const error = new Error('Invalid date format. Must be a valid date string.');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    if (theme && !['teal', 'rose', 'amber', 'magenta', 'purple'].includes(theme)) {
+      const error = new Error('Invalid theme. Allowed values: teal, rose, amber, magenta, purple.');
+      error.statusCode = 400;
+      return next(error);
+    }
+
     const event = await CalendarEvent.create({
       date,
       category,
@@ -73,6 +93,25 @@ router.post('/', authenticate, requireRole('admin', 'super_admin'), async (req, 
 router.put('/:id', authenticate, requireRole('admin', 'super_admin'), async (req, res, next) => {
   try {
     const { date, category, tags, desc, theme } = req.body;
+
+    // Validate MongoDB ObjectId format to prevent CastErrors
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      const error = new Error('Invalid calendar event ID format.');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    if (date !== undefined && !isValidDateString(date)) {
+      const error = new Error('Invalid date format. Must be a valid date string.');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    if (theme !== undefined && !['teal', 'rose', 'amber', 'magenta', 'purple'].includes(theme)) {
+      const error = new Error('Invalid theme. Allowed values: teal, rose, amber, magenta, purple.');
+      error.statusCode = 400;
+      return next(error);
+    }
 
     const event = await CalendarEvent.findById(req.params.id);
     if (!event) {
@@ -101,6 +140,13 @@ router.put('/:id', authenticate, requireRole('admin', 'super_admin'), async (req
  */
 router.delete('/:id', authenticate, requireRole('admin', 'super_admin'), async (req, res, next) => {
   try {
+    // Validate MongoDB ObjectId format to prevent CastErrors
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      const error = new Error('Invalid calendar event ID format.');
+      error.statusCode = 400;
+      return next(error);
+    }
+
     const event = await CalendarEvent.findByIdAndDelete(req.params.id);
     if (!event) {
       const error = new Error('Calendar event not found');
