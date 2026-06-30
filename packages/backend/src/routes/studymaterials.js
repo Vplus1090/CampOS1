@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import StudyMaterial from '../models/StudyMaterial.js';
 import { authenticate, requireRole } from '../middleware/auth.js';
 
@@ -9,6 +10,13 @@ const isValidDriveLink = (link) => {
   if (!link) return false;
   const drivePattern = /^https?:\/\/(drive|docs)\.google\.com\/(file\/d\/[a-zA-Z0-9_-]+|folders\/[a-zA-Z0-9_-]+|open\?id=[a-zA-Z0-9_-]+|drive\/folders\/[a-zA-Z0-9_-]+)/;
   return drivePattern.test(link);
+};
+
+// Helper validation for file size format
+const isValidSize = (size) => {
+  if (!size) return true;
+  const sizePattern = /^\d+(\.\d+)?\s*(KB|MB|GB|B)$/i;
+  return sizePattern.test(size);
 };
 
 
@@ -74,6 +82,12 @@ router.post('/', authenticate, requireRole('super_admin'), async (req, res, next
       return next(error);
     }
 
+    if (size !== undefined && !isValidSize(size)) {
+      const error = new Error('Invalid size format. Examples: "1.5 MB", "500 KB".');
+      error.statusCode = 400;
+      return next(error);
+    }
+
     const material = await StudyMaterial.create({
       name,
       driveLink,
@@ -99,6 +113,19 @@ router.post('/', authenticate, requireRole('super_admin'), async (req, res, next
 router.put('/:id', authenticate, requireRole('super_admin'), async (req, res, next) => {
   try {
     const { name, driveLink, branch, semester, type, code, size, subject } = req.body;
+
+    // Validate MongoDB ObjectId format to prevent CastErrors
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      const error = new Error('Invalid Study Material ID format.');
+      error.statusCode = 400;
+      return next(error);
+    }
+
+    if (size !== undefined && !isValidSize(size)) {
+      const error = new Error('Invalid size format. Examples: "1.5 MB", "500 KB".');
+      error.statusCode = 400;
+      return next(error);
+    }
 
     if (driveLink !== undefined && !isValidDriveLink(driveLink)) {
       const error = new Error('Invalid Google Drive link format.');
@@ -145,6 +172,13 @@ router.put('/:id', authenticate, requireRole('super_admin'), async (req, res, ne
  */
 router.delete('/:id', authenticate, requireRole('super_admin'), async (req, res, next) => {
   try {
+    // Validate MongoDB ObjectId format to prevent CastErrors
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      const error = new Error('Invalid Study Material ID format.');
+      error.statusCode = 400;
+      return next(error);
+    }
+
     const material = await StudyMaterial.findByIdAndDelete(req.params.id);
     if (!material) {
       const error = new Error('Study material not found');
