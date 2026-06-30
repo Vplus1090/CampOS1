@@ -14,6 +14,16 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
+// Strict check for production environments
+if (process.env.NODE_ENV === 'production') {
+  const weakSecrets = ['secret', 'devsecret', 'dev_secret', '1234567890', 'campos_secret'];
+  if (weakSecrets.includes((process.env.JWT_ACCESS_SECRET || '').toLowerCase()) || 
+      weakSecrets.includes((process.env.JWT_REFRESH_SECRET || '').toLowerCase())) {
+    console.error('❌ [DEPLOYMENT ERROR] JWT secrets cannot use weak default keys in production.');
+    process.exit(1);
+  }
+}
+
 const env = Object.freeze({
   PORT: parseInt(process.env.PORT, 10) || 5001,
   NODE_ENV: process.env.NODE_ENV || 'development',
