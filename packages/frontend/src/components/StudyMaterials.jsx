@@ -85,7 +85,7 @@ export default function StudyMaterials({ currentUser, setActiveTab, initialBranc
     return localStorage.getItem('campos_dismissed_exam_countdown') === 'true';
   });
   const [nextExam, setNextExam] = useState(null);
-  const [nextExamCountdown, setNextExamCountdown] = useState('');
+  const [countdownParts, setCountdownParts] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   // Fetch upcoming exams from database calendar
   useEffect(() => {
@@ -140,10 +140,10 @@ export default function StudyMaterials({ currentUser, setActiveTab, initialBranc
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-        setNextExamCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+        setCountdownParts({ days, hours, minutes, seconds });
       } else {
         setNextExam(null);
-        setNextExamCountdown('');
+        setCountdownParts({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
     };
 
@@ -343,13 +343,16 @@ export default function StudyMaterials({ currentUser, setActiveTab, initialBranc
               : 'bg-[var(--m3-primary)] text-[var(--m3-on-primary)]'
           }`}>
             <div className="flex flex-col text-left">
-              <span className="text-[11px] font-bold uppercase tracking-widest opacity-85">
-                {isUrgentExam ? '⚠️ Urgent Exam Upcoming: ' : 'Upcoming: '}
+              <span className="text-[10px] font-extrabold uppercase tracking-widest opacity-85">
+                {isUrgentExam ? '⚠️ Urgent Exam: ' : 'Next Exam: '}
                 {nextExam.name}
               </span>
-              <span className="text-[18px] font-bold mt-0.5">
-                {nextExamCountdown}
-              </span>
+              <div className="flex gap-1.5 items-center mt-2 flex-wrap select-none">
+                <span className="bg-white/15 border border-white/10 px-2 py-0.5 rounded-lg text-xs font-mono font-bold">{countdownParts.days}d</span>
+                <span className="bg-white/15 border border-white/10 px-2 py-0.5 rounded-lg text-xs font-mono font-bold">{countdownParts.hours}h</span>
+                <span className="bg-white/15 border border-white/10 px-2 py-0.5 rounded-lg text-xs font-mono font-bold">{countdownParts.minutes}m</span>
+                <span className="bg-white/15 border border-white/10 px-2 py-0.5 rounded-lg text-xs font-mono font-bold animate-pulse">{countdownParts.seconds}s</span>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <span className="relative flex w-2 h-2">
@@ -376,6 +379,21 @@ export default function StudyMaterials({ currentUser, setActiveTab, initialBranc
                 ✕
               </button>
             </div>
+          </div>
+        )}
+
+        {nextExam && isCountdownDismissed && (
+          <div className="w-full text-right shrink-0 pr-1 -mt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsCountdownDismissed(false);
+                localStorage.removeItem('campos_dismissed_exam_countdown');
+              }}
+              className="text-[10px] font-bold text-m3-primary hover:underline bg-transparent border-none cursor-pointer"
+            >
+              Restore Countdown Banner
+            </button>
           </div>
         )}
 
