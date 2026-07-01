@@ -85,7 +85,7 @@ export default function StudyMaterials({ currentUser, setActiveTab, initialBranc
     return localStorage.getItem('campos_dismissed_exam_countdown') === 'true';
   });
   const [nextExam, setNextExam] = useState(null);
-  const [nextExamCountdown, setNextExamCountdown] = useState('');
+  const [countdownParts, setCountdownParts] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   // Fetch upcoming exams from database calendar
   useEffect(() => {
@@ -140,10 +140,10 @@ export default function StudyMaterials({ currentUser, setActiveTab, initialBranc
         const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-        setNextExamCountdown(`${days}d ${hours}h ${minutes}m ${seconds}s`);
+        setCountdownParts({ days, hours, minutes, seconds });
       } else {
         setNextExam(null);
-        setNextExamCountdown('');
+        setCountdownParts({ days: 0, hours: 0, minutes: 0, seconds: 0 });
       }
     };
 
@@ -324,6 +324,8 @@ export default function StudyMaterials({ currentUser, setActiveTab, initialBranc
     return groups;
   }, [filteredMaterials]);
 
+  const isUrgentExam = nextExam && (nextExam.target - new Date().getTime() < 5 * 24 * 60 * 60 * 1000);
+
   return (
     <div className="m3-screen study-materials-dashboard">
       <M3ScreenHeader
@@ -335,17 +337,31 @@ export default function StudyMaterials({ currentUser, setActiveTab, initialBranc
 
       <div onScroll={handleScroll} className="m3-screen__scroll" style={{ paddingBottom: 88 }}>
         {nextExam && !isCountdownDismissed && (
-          <div className="bg-[var(--m3-primary)] text-[var(--m3-on-primary)] shrink-0 flex items-center justify-between gap-3 rounded-[20px] p-4 shadow-sm relative overflow-hidden">
+          <div className={`shrink-0 flex items-center justify-between gap-3 rounded-[20px] p-4 shadow-sm relative overflow-hidden transition-all duration-300 ${
+            isUrgentExam 
+              ? 'bg-gradient-to-r from-rose-500 to-amber-500 text-white' 
+              : 'bg-[var(--m3-primary)] text-[var(--m3-on-primary)]'
+          }`}>
             <div className="flex flex-col text-left">
-              <span className="text-[11px] font-bold uppercase tracking-widest opacity-85">Upcoming: {nextExam.name}</span>
-              <span className="text-[18px] font-bold mt-0.5">
-                {nextExamCountdown}
+              <span className="text-[10px] font-extrabold uppercase tracking-widest opacity-85">
+                {isUrgentExam ? '⚠️ Urgent Exam: ' : 'Next Exam: '}
+                {nextExam.name}
               </span>
+              <div className="flex gap-1.5 items-center mt-2 flex-wrap select-none">
+                <span className="bg-white/15 border border-white/10 px-2 py-0.5 rounded-lg text-xs font-mono font-bold">{countdownParts.days}d</span>
+                <span className="bg-white/15 border border-white/10 px-2 py-0.5 rounded-lg text-xs font-mono font-bold">{countdownParts.hours}h</span>
+                <span className="bg-white/15 border border-white/10 px-2 py-0.5 rounded-lg text-xs font-mono font-bold">{countdownParts.minutes}m</span>
+                <span className="bg-white/15 border border-white/10 px-2 py-0.5 rounded-lg text-xs font-mono font-bold animate-pulse">{countdownParts.seconds}s</span>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <span className="relative flex w-2 h-2">
-                <span className="absolute inline-flex w-full h-full bg-[var(--m3-on-primary)]/40 rounded-full opacity-75 animate-ping" />
-                <span className="relative inline-flex w-2 h-2 bg-[var(--m3-on-primary)]" />
+                <span className={`absolute inline-flex w-full h-full rounded-full opacity-75 animate-ping ${
+                  isUrgentExam ? 'bg-white/40' : 'bg-[var(--m3-on-primary)]/40'
+                }`} />
+                <span className={`relative inline-flex w-2 h-2 rounded-full ${
+                  isUrgentExam ? 'bg-white' : 'bg-[var(--m3-on-primary)]'
+                }`} />
               </span>
               <button
                 type="button"
@@ -353,12 +369,31 @@ export default function StudyMaterials({ currentUser, setActiveTab, initialBranc
                   setIsCountdownDismissed(true);
                   localStorage.setItem('campos_dismissed_exam_countdown', 'true');
                 }}
-                className="w-6 h-6 rounded-full hover:bg-[var(--m3-on-primary)]/10 text-[var(--m3-on-primary)] flex items-center justify-center transition border-none cursor-pointer text-xs font-bold"
+                className={`w-6 h-6 rounded-full flex items-center justify-center transition border-none cursor-pointer text-xs font-bold ${
+                  isUrgentExam 
+                    ? 'hover:bg-white/10 text-white' 
+                    : 'hover:bg-[var(--m3-on-primary)]/10 text-[var(--m3-on-primary)]'
+                }`}
                 title="Dismiss Countdown"
               >
                 ✕
               </button>
             </div>
+          </div>
+        )}
+
+        {nextExam && isCountdownDismissed && (
+          <div className="w-full text-right shrink-0 pr-1 -mt-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsCountdownDismissed(false);
+                localStorage.removeItem('campos_dismissed_exam_countdown');
+              }}
+              className="text-[10px] font-bold text-m3-primary hover:underline bg-transparent border-none cursor-pointer"
+            >
+              Restore Countdown Banner
+            </button>
           </div>
         )}
 
